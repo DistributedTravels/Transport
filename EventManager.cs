@@ -22,7 +22,7 @@ namespace Transport
             var channel = _connection.CreateModel();
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.Received += ReceiveEvent;
-            channel.QueueDeclare(queue: _queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
+            channel.QueueDeclare(queue: _queueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
             channel.BasicConsume(queue: _queueName, autoAck: false, consumer: consumer);
         }
 
