@@ -1,6 +1,8 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Transport.Models;
+using Models;
+using Models.Transport;
+using Transport.Handlers;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -8,11 +10,13 @@ namespace Transport
 {
     public class EventManager
     {
-        private string _queueName;
+        private List<Type> events = new List<Type>();
+        private Dictionary<string, Handler> handlers =  new Dictionary<string, Handler>();
         private IConnection _connection;
-        public EventManager(string queueName)
+        public EventManager()
         {
-            this._queueName = queueName;
+            this.RegisterHandler(new ReserveTransportHandler(this.Publish), typeof(ReserveTransportEvent));
+            // register the rest of Handlers
         }
 
         public void ListenForEvents()
@@ -22,18 +26,46 @@ namespace Transport
             var channel = _connection.CreateModel();
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.Received += ReceiveEvent;
-            channel.QueueDeclare(queue: _queueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
-            channel.BasicConsume(queue: _queueName, autoAck: false, consumer: consumer);
+            foreach (var @event in this.events)
+            {
+                channel.QueueDeclare(queue: @event.Name, durable: false, exclusive: false, autoDelete: false, arguments: null);
+                channel.BasicConsume(queue: @event.Name, autoAck: false, consumer: consumer);
+            }
+        }
+
+        private void RegisterHandler(Handler handler, Type @event)
+        {
+            this.RegisterEvent(@event);
+            this.handlers.Add(@event.Name, handler);
+        }
+
+        private void RegisterEvent(Type @event)
+        {
+           this.events.Add(@event);
+        }
+
+        private (Type?, Handler?) FindHandler(string eventName)
+        {
+            foreach(var @event in this.events)
+            {
+                if (@event.Name == eventName)
+                    return (@event, this.handlers[eventName]);
+            }
+            return (null, null);
         }
 
         private async Task ReceiveEvent(object sender, BasicDeliverEventArgs args)
         {
             var eventName = args.RoutingKey; // type of message in queue
-            switch(eventName)
+            (Type eventType, var handler) = FindHandler(eventName);
+            if (handler != null && eventType != null)
             {
-                default:
-                    await ExampleProcessEvent(sender, args);
-                    break;
+                var message = Encoding.UTF8.GetString(args.Body.ToArray());
+                // a little magic Type casting with Newtonsoft JSON
+                dynamic @event = JsonConvert.DeserializeObject(message, eventType);
+                await handler.HandleEvent(@event);
+            } else {
+                // write log about unknown event received?
             }
         }
 
