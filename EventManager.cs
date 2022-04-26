@@ -16,9 +16,14 @@ namespace Transport
         public EventManager()
         {
             this.RegisterHandler(new ReserveTransportHandler(this.Publish), typeof(ReserveTransportEvent));
-            // register the rest of Handlers
+            // register the rest of Handlers + Events
         }
 
+        /**
+         * <summary>
+         * Method ListenForEvents sets up connection and all queues that belong to this Service.
+         * </summary>
+         */
         public void ListenForEvents()
         {
             var factory = new ConnectionFactory() {HostName="rabbitmq", Password="guest", UserName="guest"}; // connection details to "rabbitmq" broker on default port with credentials guest:guest
@@ -33,17 +38,32 @@ namespace Transport
             }
         }
 
+        /**
+         * <summary>
+         * Method RegisterHandler registers an event handler together with corresponding event.
+         * </summary>
+         */
         private void RegisterHandler(Handler handler, Type @event)
         {
             this.RegisterEvent(@event);
             this.handlers.Add(@event.Name, handler);
         }
 
+        /**
+         * <summary>
+         * Method RegisterEvent registers an event type. Type passed by using typeof().
+         * </summary>
+         */
         private void RegisterEvent(Type @event)
         {
            this.events.Add(@event);
         }
 
+        /**
+         * <summary>
+         * Method FindHandler checks if there is a handler for received event and returns corresponding handler and event type.
+         * </summary>
+         */
         private (Type?, Handler?) FindHandler(string eventName)
         {
             foreach(var @event in this.events)
@@ -54,6 +74,11 @@ namespace Transport
             return (null, null);
         }
 
+        /**
+         * <summary>
+         * Method ReceiveEvent fires when RabbitMQ consumer receives a message and passes the event to proper handler.
+         * </summary>
+         */
         private async Task ReceiveEvent(object sender, BasicDeliverEventArgs args)
         {
             var eventName = args.RoutingKey; // type of message in queue
@@ -62,13 +87,22 @@ namespace Transport
             {
                 var message = Encoding.UTF8.GetString(args.Body.ToArray());
                 // a little magic Type casting with Newtonsoft JSON
-                dynamic @event = JsonConvert.DeserializeObject(message, eventType);
-                await handler.HandleEvent(@event);
+                var @event = (EventModel) JsonConvert.DeserializeObject(message, eventType);
+                if (@event != null)
+                    await handler.HandleEvent(@event);
+                else {
+                    // write error log
+                }
             } else {
                 // write log about unknown event received?
             }
         }
 
+        /**
+         * <summary>
+         * Method Publish sends passed event to proper RabbitMQ queue.
+         * </summary>
+         */
         private void Publish(EventModel @event)
         {
             // TODO: it'd be nice to add retry policy here
@@ -88,7 +122,7 @@ namespace Transport
             }
         }
 
-        private async Task ExampleProcessEvent(object sender, BasicDeliverEventArgs args)
+        /*private async Task ExampleProcessEvent(object sender, BasicDeliverEventArgs args)
         {
             var message = Encoding.UTF8.GetString(args.Body.ToArray());
             // processing of the event here
@@ -98,6 +132,6 @@ namespace Transport
             // reply if needed
             Publish(newEvent);
             await Task.Yield();
-        }
+        }*/
     }
 }
