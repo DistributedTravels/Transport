@@ -7,14 +7,16 @@ namespace Transport.Handlers
      * Abstract class to create further handlers for each event type.
      * </summary>
      */
-    public abstract class Handler
+    public abstract class IHandler
     {
 
-        private Action<EventModel> publish;
+        protected Action<EventModel> publish; // to allow for publishing within handler
+        protected readonly WebApplication app; // required for database calls
 
-        public Handler(Action<EventModel> publish)
+        public IHandler(Action<EventModel> publish, WebApplication app)
         {
             this.publish = publish;
+            this.app = app;
         }
 
         /**
@@ -22,7 +24,7 @@ namespace Transport.Handlers
          * Method HandleEvent processes data transferred within event message and acts upon it.
          * </summary>
          */
-        public abstract Task HandleEvent(EventModel @event);
+        public abstract Task HandleEvent(string content);
 
         /**
          * <summary>

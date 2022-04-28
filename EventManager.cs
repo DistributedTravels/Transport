@@ -5,17 +5,21 @@ using Models.Transport;
 using Transport.Handlers;
 using Newtonsoft.Json;
 using System.Text;
+using System.Threading;
 
 namespace Transport
 {
     public class EventManager
     {
-        private List<Type> events = new List<Type>();
-        private Dictionary<string, Handler> handlers =  new Dictionary<string, Handler>();
-        private IConnection _connection;
-        public EventManager()
+        private List<Type> events = new List<Type>(); // list of events handled by this service
+        private Dictionary<string, IHandler> handlers =  new Dictionary<string, IHandler>(); // list of handlers and corresponding events
+        private IConnection _connection; // connection to RabbitMQ
+        private IModel _channel; // connection channel to RabbitMQ, required to ACK messages
+        private readonly WebApplication app; // used for retreiving service context (mostly DB)
+        public EventManager(WebApplication app)
         {
-            this.RegisterHandler(new ReserveTransportHandler(this.Publish), typeof(ReserveTransportEvent));
+            this.app = app;
+            this.RegisterHandler(new ReserveTransportHandler(this.Publish, this.app), typeof(ReserveTransportEvent));
             // register the rest of Handlers + Events
         }
 
@@ -26,16 +30,32 @@ namespace Transport
          */
         public void ListenForEvents()
         {
-            var factory = new ConnectionFactory() {HostName="rabbitmq", Password="guest", UserName="guest"}; // connection details to "rabbitmq" broker on default port with credentials guest:guest
-            _connection = factory.CreateConnection();
-            var channel = _connection.CreateModel();
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.Received += ReceiveEvent;
-            foreach (var @event in this.events)
+            // connection details to "rabbitmq" broker on default port with credentials guest:guest
+            // DispatchConsumersAsync to allow for Async Consumers
+            var factory = new ConnectionFactory() {HostName="rabbitmq", Password="guest", UserName="guest", DispatchConsumersAsync=true}; 
+            var retry = new ManualResetEventSlim(false); // connection retry timeout
+            while (!retry.Wait(3000)) // checks for connection every 3s or till successful connection
             {
-                channel.QueueDeclare(queue: @event.Name, durable: false, exclusive: false, autoDelete: false, arguments: null);
-                channel.BasicConsume(queue: @event.Name, autoAck: false, consumer: consumer);
+                try
+                {
+                    _connection = factory.CreateConnection();
+                    Console.WriteLine("Connected to message broker");
+                    retry.Set();
+                    _channel = _connection.CreateModel();
+                    var consumer = new AsyncEventingBasicConsumer(_channel);
+                    consumer.Received += ReceiveEvent;
+                    foreach (var @event in this.events) // create all queues and consumers handled in this service
+                    {
+                        _channel.QueueDeclare(queue: @event.Name, durable: false, exclusive: false, autoDelete: false, arguments: null);
+                        _channel.BasicConsume(queue: @event.Name, autoAck: false, consumer: consumer);
+                    }
+                }
+                catch (RabbitMQ.Client.Exceptions.BrokerUnreachableException ex)
+                {
+                    Console.WriteLine("Broker unreachable");
+                }
             }
+            
         }
 
         /**
@@ -43,7 +63,7 @@ namespace Transport
          * Method RegisterHandler registers an event handler together with corresponding event.
          * </summary>
          */
-        private void RegisterHandler(Handler handler, Type @event)
+        private void RegisterHandler(IHandler handler, Type @event)
         {
             this.RegisterEvent(@event);
             this.handlers.Add(@event.Name, handler);
@@ -64,14 +84,14 @@ namespace Transport
          * Method FindHandler checks if there is a handler for received event and returns corresponding handler and event type.
          * </summary>
          */
-        private (Type?, Handler?) FindHandler(string eventName)
+        private IHandler? FindHandler(string eventName)
         {
             foreach(var @event in this.events)
             {
                 if (@event.Name == eventName)
-                    return (@event, this.handlers[eventName]);
+                    return this.handlers[eventName];
             }
-            return (null, null);
+            return null;
         }
 
         /**
@@ -81,18 +101,14 @@ namespace Transport
          */
         private async Task ReceiveEvent(object sender, BasicDeliverEventArgs args)
         {
+            Console.WriteLine("RabbitMQ Messege Received");
             var eventName = args.RoutingKey; // type of message in queue
-            (Type eventType, var handler) = FindHandler(eventName);
-            if (handler != null && eventType != null)
+            var handler = FindHandler(eventName);
+            if (handler != null)
             {
                 var message = Encoding.UTF8.GetString(args.Body.ToArray());
-                // a little magic Type casting with Newtonsoft JSON
-                var @event = (EventModel) JsonConvert.DeserializeObject(message, eventType);
-                if (@event != null)
-                    await handler.HandleEvent(@event);
-                else {
-                    // write error log
-                }
+                await handler.HandleEvent(message); // process event
+                _channel.BasicAck(deliveryTag: args.DeliveryTag, multiple: false); // ACK message procesing, possibly unneeded (?)              
             } else {
                 // write log about unknown event received?
             }
