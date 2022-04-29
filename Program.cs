@@ -8,11 +8,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // DB connection creation
 // User, Password and Database are configured in Docker/init/db/initdb.sql file
-var connectionString = "server=mariadb;user=Transport;password=transport;database=Transport";
+// MariaDB -> var connectionString = "server=mariadb;user=Transport;password=transport;database=Transport";
+//var connectionString = @"Host=psql;Username=Transport;Password=transport;Database=Transport";
 // setting up DB as app service, some logging should be disabled for production
 builder.Services.AddDbContext<TransportContext>(
             dbContextOptions => dbContextOptions
-                .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+                .UseNpgsql(builder.Configuration.GetConnectionString("PsqlConnection"))
                 // The following three options help with debugging, but should
                 // be changed or removed for production.
                 .LogTo(Console.WriteLine, LogLevel.Information)

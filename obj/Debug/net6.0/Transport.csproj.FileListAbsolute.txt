@@ -72,3 +72,5 @@ D:\Projects\DistributedTravels\Transport\obj\Debug\net6.0\refint\Transport.dll
 D:\Projects\DistributedTravels\Transport\obj\Debug\net6.0\Transport.pdb
 D:\Projects\DistributedTravels\Transport\obj\Debug\net6.0\Transport.genruntimeconfig.cache
 D:\Projects\DistributedTravels\Transport\obj\Debug\net6.0\ref\Transport.dll
+D:\Projects\DistributedTravels\Transport\bin\Debug\net6.0\Npgsql.dll
+D:\Projects\DistributedTravels\Transport\bin\Debug\net6.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll

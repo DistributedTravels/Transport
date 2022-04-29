@@ -14,17 +14,18 @@ namespace Transport.Database
             modelBuilder.Entity<Destination>().ToTable("Destination"); // table name overwrite (removing the plural "s")
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) // config overwrite, possibly unneeded (?)
+        /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) // config overwrite, possibly unneeded (?)
         {
-            var connString = "server=mariadb;user=Transport;password=transport;database=Transport";
+            // MariaDB -> var connectionString = "server=mariadb;user=Transport;password=transport;database=Transport";
+            var connectionString = @"Host=psql;Username=Transport;Password=transport;Database=Transport";
             if (!optionsBuilder.IsConfigured) {
-                optionsBuilder.UseMySql(connString, ServerVersion.AutoDetect(connString))
+                optionsBuilder.UseNpgsql(connectionString)
                     // The following three options help with debugging, but should
                     // be changed or removed for production.
                     .LogTo(Console.WriteLine, LogLevel.Information)
                     .EnableSensitiveDataLogging()
                     .EnableDetailedErrors();
             }
-        }
+        }*/
     }
 }
