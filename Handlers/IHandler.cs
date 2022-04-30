@@ -31,7 +31,7 @@ namespace Transport.Handlers
          * Method that uses EventManager's Publish to send "reply" events from within Handler.
          * </summary>
          */
-        private void PublishEvent(EventModel @event)
+        protected void PublishEvent(EventModel @event)
         {
             this.publish(@event);
         }
