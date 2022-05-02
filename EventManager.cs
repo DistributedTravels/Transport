@@ -18,8 +18,9 @@ namespace Transport
         public EventManager(WebApplication app)
         {
             this.app = app;
-            this.RegisterHandler(new ReserveTransportHandler(this.Publish, this.app), typeof(ReserveTransportEvent));
+            this.RegisterHandler(new ReserveTravelHandler(this.Publish, this.app), typeof(ReserveTravelEvent));
             // register the rest of Handlers + Events
+            this.RegisterHandler(new GetAvailableTravelsHandler(this.Publish, this.app), typeof(GetAvailableTravelsEvent));
         }
 
         /**

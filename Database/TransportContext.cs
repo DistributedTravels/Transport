@@ -7,13 +7,16 @@ namespace Transport.Database
     {
         public TransportContext(DbContextOptions<TransportContext> options) : base(options) { } // service creation constructor
         public TransportContext() { } // empty constructor, possibly unneeded (?)
+
         public DbSet<Destination> Destinations { get; set; } // table definition
+        public DbSet<Source> Sources { get; set; }
         public DbSet<Travel> Travels { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Destination>().ToTable("Destination"); // table name overwrite (removing the plural "s")
             modelBuilder.Entity<Travel>().ToTable("Travel");
+            modelBuilder.Entity<Source>().ToTable("Source");
         }
 
         /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) // config overwrite, possibly unneeded (?)
