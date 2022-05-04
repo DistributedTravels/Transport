@@ -1,16 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Transport.Database.Tables;
+using System.Configuration;
 
 namespace Transport.Database
 {
     public class TransportContext : DbContext
     {
         public TransportContext(DbContextOptions<TransportContext> options) : base(options) { } // service creation constructor
-        public TransportContext() { } // empty constructor, possibly unneeded (?)
 
-        public DbSet<Destination> Destinations { get; set; } // table definition
-        public DbSet<Source> Sources { get; set; }
-        public DbSet<Travel> Travels { get; set; }
+        public TransportContext() : base() { }
+        public virtual DbSet<Destination> Destinations { get; set; } // table definition
+        public virtual DbSet<Source> Sources { get; set; }
+        public virtual DbSet<Travel> Travels { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -22,9 +23,9 @@ namespace Transport.Database
         /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) // config overwrite, possibly unneeded (?)
         {
             // MariaDB -> var connectionString = "server=mariadb;user=Transport;password=transport;database=Transport";
-            var connectionString = @"Host=psql;Username=Transport;Password=transport;Database=Transport";
+            //var connectionString = @"Host=psql;Username=Transport;Password=transport;Database=Transport";
             if (!optionsBuilder.IsConfigured) {
-                optionsBuilder.UseNpgsql(connectionString)
+                optionsBuilder.UseNpgsql(connString)
                     // The following three options help with debugging, but should
                     // be changed or removed for production.
                     .LogTo(Console.WriteLine, LogLevel.Information)

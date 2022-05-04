@@ -10,32 +10,40 @@ namespace Transport.Handlers
 {
     public class ReserveTravelHandler : IHandler
     {
-        public ReserveTravelHandler(Action<EventModel> publish, WebApplication app) : base(publish, app)
+        public ReserveTravelHandler(Action<EventModel> publish, Action<EventModel, string, string> reply, string connString) 
+            : base(publish, reply, connString)
         {
             // any additional init here
         }
 
-        public override async Task HandleEvent(string content)
+        public override async Task HandleEvent(string content, string replyTo, string cId)
         {
             // deserialize object from string (since we know the exact type)
             var @event = JsonConvert.DeserializeObject<ReserveTravelEvent>(content);
             // debug message
             Console.WriteLine($"Event received {@event.Id} msg: {content}");
             // find proper flight and "book" seats
-            using (var contScope = this.app.Services.CreateScope())
-            using (var context = contScope.ServiceProvider.GetRequiredService<TransportContext>())
+            using (var context = GetDbContext())
             {
-                var res = context.Travels.Where(x => x.Id == @event.FlightId).First();
-                if (res != null)
-                {
-                    res.FreeSeats -= @event.Seats;
-                    context.SaveChanges();
-                }
-                else
-                {
-                    Console.Error.WriteLine($"Error, no flight found with ID: {@event.Id}");
-                }
+                var res = await UpdateFlightSeats(context, @event);
+                if (res == null)
+                    Console.Error.WriteLine($"Error updating seats, no flight found with id: {@event.FlightId}");
             }
+        }
+
+        public async Task<int?> UpdateFlightSeats(TransportContext context, ReserveTravelEvent @event)
+        {
+            var res = from travels in context.Travels
+                      where travels.Id == @event.FlightId
+                      select travels;
+            if (res.Any())
+            {
+                var travel = res.Single();
+                travel.FreeSeats -= @event.Seats;
+                await context.SaveChangesAsync();
+                return travel.FreeSeats;
+            }
+            return null;
         }
     }
 }

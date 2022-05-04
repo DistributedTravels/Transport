@@ -14,13 +14,11 @@ namespace Transport
         private Dictionary<string, IHandler> handlers =  new Dictionary<string, IHandler>(); // list of handlers and corresponding events
         private IConnection _connection; // connection to RabbitMQ
         private IModel _channel; // connection channel to RabbitMQ, required to ACK messages
-        private readonly WebApplication app; // used for retreiving service context (mostly DB)
-        public EventManager(WebApplication app)
+        public EventManager(string dbConnStr)
         {
-            this.app = app;
-            this.RegisterHandler(new ReserveTravelHandler(this.Publish, this.app), typeof(ReserveTravelEvent));
+            this.RegisterHandler(new ReserveTravelHandler(this.Publish, this.Reply, dbConnStr), typeof(ReserveTravelEvent));
             // register the rest of Handlers + Events
-            this.RegisterHandler(new GetAvailableTravelsHandler(this.Publish, this.app), typeof(GetAvailableTravelsEvent));
+            this.RegisterHandler(new GetAvailableTravelsHandler(this.Publish, this.Reply, dbConnStr), typeof(GetAvailableTravelsEvent));
         }
 
         /**
@@ -107,7 +105,10 @@ namespace Transport
             if (handler != null)
             {
                 var message = Encoding.UTF8.GetString(args.Body.ToArray());
-                await handler.HandleEvent(message); // process event
+                await handler.HandleEvent(
+                    message, 
+                    args.BasicProperties.ReplyTo, 
+                    args.BasicProperties.CorrelationId); // process event
                 _channel.BasicAck(deliveryTag: args.DeliveryTag, multiple: false); // ACK message procesing, possibly unneeded (?)              
             } else {
                 // write log about unknown event received?
@@ -132,6 +133,25 @@ namespace Transport
                 channel.BasicPublish(
                     exchange:"", // set exchange name
                     routingKey: eventName,
+                    mandatory: true,
+                    basicProperties: properties,
+                    body: body);
+            }
+        }
+
+        private void Reply(EventModel @event, string replyTo, string cId)
+        {
+            var eventName = @event.GetType().Name; // name of IntegrationEvent that gets published
+            using (var channel = _connection.CreateModel())
+            {
+                var message = JsonConvert.SerializeObject(@event);
+                var body = Encoding.UTF8.GetBytes(message);
+                var properties = channel.CreateBasicProperties();
+                properties.DeliveryMode = 2;
+                properties.CorrelationId = cId;
+                channel.BasicPublish(
+                    exchange: "", // set exchange name
+                    routingKey: replyTo,
                     mandatory: true,
                     basicProperties: properties,
                     body: body);

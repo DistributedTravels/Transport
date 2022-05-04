@@ -2,7 +2,6 @@ using Transport;
 using Transport.Database;
 using Microsoft.EntityFrameworkCore;
 using Transport.Database.Tables;
-using Models.Transport;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 // MariaDB -> var connectionString = "server=mariadb;user=Transport;password=transport;database=Transport";
 //var connectionString = @"Host=psql;Username=Transport;Password=transport;Database=Transport";
 // setting up DB as app service, some logging should be disabled for production
-builder.Services.AddDbContext<TransportContext>(
+/*builder.Services.AddDbContext<TransportContext>(
             dbContextOptions => dbContextOptions
                 .UseNpgsql(builder.Configuration.GetConnectionString("PsqlConnection"))
                 // The following three options help with debugging, but should
@@ -19,13 +18,15 @@ builder.Services.AddDbContext<TransportContext>(
                 .LogTo(Console.WriteLine, LogLevel.Information)
                 .EnableSensitiveDataLogging()
                 .EnableDetailedErrors()
-        );
+        );*/
 var app = builder.Build();
-var manager = new EventManager(app);
+var manager = new EventManager(builder.Configuration.GetConnectionString("PsqlConnection"));
 manager.ListenForEvents();
 
+
+
 // example of inserting new Data to Database, Ensure created should be called at init of service (?)
-using (var contScope = app.Services.CreateScope())
+/*using (var contScope = app.Services.CreateScope())
 using (var context = contScope.ServiceProvider.GetRequiredService<TransportContext>())
 {
     // Ensure Deleted possible to use for testing
@@ -36,5 +37,5 @@ using (var context = contScope.ServiceProvider.GetRequiredService<TransportConte
     context.SaveChanges(); // save to DB
     Console.WriteLine("Done inserting test data");
     // manager.Publish(new ReserveTransportEvent(1));
-}
+}*/
 app.Run();

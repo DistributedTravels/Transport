@@ -15,11 +15,12 @@ namespace Transport.Handlers
         private readonly int SeatMin = 80;
         private readonly int SeatMax = 130;
         private readonly Random random = new(); // fancy!
-        public GetAvailableTravelsHandler(Action<EventModel> publish, WebApplication app) : base(publish, app)
+        public GetAvailableTravelsHandler(Action<EventModel> publish, Action<EventModel, string, string> reply, string connString) 
+            : base(publish, reply, connString)
         {
         }
 
-        public override async Task HandleEvent(string content)
+        public override async Task HandleEvent(string content, string replyTo, string cId)
         {
             GetAvailableTravelsEvent? @event = JsonConvert.DeserializeObject<GetAvailableTravelsEvent>(content);
             if (@event != null)
@@ -29,10 +30,9 @@ namespace Transport.Handlers
                 var StartDate = @event.DepartureTime.Date;
                 var EndDate = @event.DepartureTime.Date.AddDays(1);
                 IEnumerable<TravelItem>? final;
-                using (var scope = this.app.Services.CreateScope())
-                using(var context = scope.ServiceProvider.GetRequiredService<TransportContext>())
+                using (var context = new TransportContext(this.GetDbOptions()))
                 {
-                    var res = (from travel in context.Travels
+                    var res = from travel in context.Travels
                               where travel.DepartureTime >= StartDate && travel.DepartureTime < EndDate
                               select new Travel
                               {
@@ -41,24 +41,24 @@ namespace Transport.Handlers
                                   FreeSeats = travel.FreeSeats,
                                   Source = travel.Source,
                                   Destination = travel.Destination,
-                              }) as IEnumerable<Travel>;
+                              };
 
-                    if (res == null)
+                    if (!res.Any())
                     {
                         // no flights that day, generate some new ones
-                        res = GenerateTravels(StartDate, context);
+                        res = GenerateTravels(StartDate, context).AsQueryable();
                     }
                     final = FilterResult(res, @event.FreeSeats, @event.Source, @event.Destination);
                 }
                 // final is null if no transport found
-                this.PublishEvent(new GetAvailableTravelsReplyEvent(@event.Id, final));
+                this.reply(new GetAvailableTravelsReplyEvent(@event.Id, final), replyTo, cId);
             } else
             {
                 Console.Error.WriteLine("Error deserializing event type: GetAvailableTravelsEvent");
             }
         }
 
-        private IEnumerable<TravelItem>? FilterResult(IEnumerable<Travel> travels, int freeSeats, string source, string dest)
+        public IEnumerable<TravelItem>? FilterResult(IEnumerable<Travel> travels, int freeSeats, string source, string dest)
         {
             var tmp = new List<Travel>();
             foreach (var travel in travels)
@@ -71,10 +71,13 @@ namespace Transport.Handlers
             foreach (var travel in tmp)
                 final.Add(new TravelItem(travel.Id, travel.Source, travel.Destination, travel.DepartureTime, travel.FreeSeats));
 
+            if(final.Count == 0)
+                return null;
+
             return final;
         }
 
-        private IEnumerable<Travel> GenerateTravels(DateTime date, TransportContext context)
+        public IEnumerable<Travel> GenerateTravels(DateTime date, TransportContext context)
         {
             var generated = new List<Travel>();
 

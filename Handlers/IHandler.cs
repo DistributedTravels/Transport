@@ -1,4 +1,6 @@
 ﻿using Models;
+using Microsoft.EntityFrameworkCore;
+using Transport.Database;
 
 namespace Transport.Handlers
 {
@@ -11,12 +13,28 @@ namespace Transport.Handlers
     {
 
         protected Action<EventModel> publish; // to allow for publishing within handler
-        protected readonly WebApplication app; // required for database calls
+        protected Action<EventModel, string, string> reply;
+        protected readonly string connString; // required for database calls
 
-        public IHandler(Action<EventModel> publish, WebApplication app)
+        public IHandler(Action<EventModel> publish, Action<EventModel, string, string> reply, string connString)
         {
             this.publish = publish;
-            this.app = app;
+            this.reply = reply;
+            this.connString = connString;
+        }
+
+        public virtual DbContextOptions<TransportContext> GetDbOptions()
+        {
+            return new DbContextOptionsBuilder<TransportContext>()
+                .UseNpgsql(connString)
+                .LogTo(Console.WriteLine, LogLevel.Information)
+                .Options;
+        }
+
+        public virtual TransportContext GetDbContext()
+        {
+            var options = GetDbOptions();
+            return new TransportContext(options);
         }
 
         /**
@@ -24,16 +42,6 @@ namespace Transport.Handlers
          * Method HandleEvent processes data transferred within event message and acts upon it.
          * </summary>
          */
-        public abstract Task HandleEvent(string content);
-
-        /**
-         * <summary>
-         * Method that uses EventManager's Publish to send "reply" events from within Handler.
-         * </summary>
-         */
-        protected void PublishEvent(EventModel @event)
-        {
-            this.publish(@event);
-        }
+        public abstract Task HandleEvent(string content, string replyTo, string cID);
     }
 }
