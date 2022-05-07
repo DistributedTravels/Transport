@@ -1,58 +1,81 @@
-using Transport;
-using Transport.Database;
 using Microsoft.EntityFrameworkCore;
 using Transport.Database.Tables;
+using MassTransit;
+using Transport.Database;
+using Transport.Consumers;
+using Models.Transport;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB connection creation
-// User, Password and Database are configured in Docker/init/db/initdb.sql file
-// MariaDB -> var connectionString = "server=mariadb;user=Transport;password=transport;database=Transport";
-//var connectionString = @"Host=psql;Username=Transport;Password=transport;Database=Transport";
-// setting up DB as app service, some logging should be disabled for production
-/*builder.Services.AddDbContext<TransportContext>(
-            dbContextOptions => dbContextOptions
-                .UseNpgsql(builder.Configuration.GetConnectionString("PsqlConnection"))
-                // The following three options help with debugging, but should
-                // be changed or removed for production.
-                .LogTo(Console.WriteLine, LogLevel.Information)
-                .EnableSensitiveDataLogging()
-                .EnableDetailedErrors()
-        );*/
-var app = builder.Build();
-var connString = builder.Configuration.GetConnectionString("PsqlConnection");
-var manager = new EventManager(connString);
+TransportContext.ConnString = builder.Configuration.GetConnectionString("PsqlConnection");
 initDB();
-manager.ListenForEvents();
 
-/*var options = new DbContextOptionsBuilder<TransportContext>()
-                .UseNpgsql(connString)
-                .LogTo(Console.WriteLine, LogLevel.Information)
-                .Options;
-
-using( var context =  new TransportContext(options))
+builder.Services.AddMassTransit(cfg =>
 {
-    var test = new Destination { Name = "TestDest" };
-    context.Destinations.Add(test); // add new item
-    context.SaveChanges(); // save to DB
-}*/
+    // adding consumers
+    cfg.AddConsumer<BookTravelEventConsumer>();
+    cfg.AddConsumer<UnbookTravelEventConsumer>();
+    cfg.AddConsumer<GetAvailableDestinationsEventConsumer>();
 
-// example of inserting new Data to Database, Ensure created should be called at init of service (?)
-/*using (var contScope = app.Services.CreateScope())
-using (var context = contScope.ServiceProvider.GetRequiredService<TransportContext>())
+    // telling masstransit to use rabbitmq
+    cfg.UsingRabbitMq((context, rabbitCfg) =>
+    {
+        // rabbitmq config
+        rabbitCfg.Host("rabbitmq", "/", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+        // automatic endpoint configuration (and I think the reason why naming convention is important
+        rabbitCfg.ConfigureEndpoints(context);
+    });
+});
+
+var app = builder.Build();
+// bus for publishing a message, to check if everything works
+// THIS SHOULD NOT EXIST IN FINAL PROJECT
+
+var busControl = Bus.Factory.CreateUsingRabbitMq(cfg =>
 {
-    // Ensure Deleted possible to use for testing
-    //context.Database.EnsureDeleted();
-    context.Database.EnsureCreated();
-    var test = new Destination { Name = "TestDest" };
-    context.Destinations.Add(test); // add new item
-    context.SaveChanges(); // save to DB
-    Console.WriteLine("Done inserting test data");
-    // manager.Publish(new ReserveTransportEvent(1));
-}*/
+    cfg.Host("rabbitmq", "/", h =>
+    {
+        h.Username("guest");
+        h.Password("guest");
+    });
+});
+busControl.Start();
+await busControl.Publish(new GetAvailableDestinationsEvent());
+busControl.Stop();
+
 app.Run();
 
 void initDB()
 {
-
+    using (var context = new TransportContext())
+    {
+        // init DB here?
+        context.Database.EnsureCreated();
+        if (!context.Destinations.Any()) {
+            using(var r = new StreamReader(@"Init/dest.json"))
+            {
+                string json = r.ReadToEnd();
+                List<string> dests = JsonConvert.DeserializeObject<List<string>>(json);
+                foreach(var dest in dests)
+                {
+                    context.Destinations.Add(new Destination { Name = dest });
+                }
+            }
+            using (var r = new StreamReader(@"Init/sources.json"))
+            {
+                string json = r.ReadToEnd();
+                List<string> srcs = JsonConvert.DeserializeObject<List<string>>(json);
+                foreach (var src in srcs)
+                {
+                    context.Sources.Add(new Source { Name = src });
+                }
+            }
+            context.SaveChanges();
+        }
+    };
 }

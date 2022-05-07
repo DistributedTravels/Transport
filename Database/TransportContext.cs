@@ -8,7 +8,13 @@ namespace Transport.Database
     {
         public TransportContext(DbContextOptions<TransportContext> options) : base(options) { } // service creation constructor
 
-        public TransportContext() : base() { }
+        public TransportContext() : 
+            base(new DbContextOptionsBuilder<TransportContext>()
+                .UseNpgsql(ConnString)
+                .LogTo(Console.WriteLine, LogLevel.Information)
+                .Options) { }
+
+        public static string ConnString {get; set;}
         public virtual DbSet<Destination> Destinations { get; set; } // table definition
         public virtual DbSet<Source> Sources { get; set; }
         public virtual DbSet<Travel> Travels { get; set; }

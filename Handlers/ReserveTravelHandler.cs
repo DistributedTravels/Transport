@@ -19,7 +19,7 @@ namespace Transport.Handlers
         public override async Task HandleEvent(string content, string replyTo, string cId)
         {
             // deserialize object from string (since we know the exact type)
-            var @event = JsonConvert.DeserializeObject<ReserveTravelEvent>(content);
+            var @event = JsonConvert.DeserializeObject<BookTravelEvent>(content);
             // debug message
             Console.WriteLine($"Event received {@event.Id} msg: {content}");
             // find proper flight and "book" seats
@@ -31,7 +31,7 @@ namespace Transport.Handlers
             }
         }
 
-        public async Task<int?> UpdateFlightSeats(TransportContext context, ReserveTravelEvent @event)
+        public async Task<int?> UpdateFlightSeats(TransportContext context, BookTravelEvent @event)
         {
             var res = from travels in context.Travels
                       where travels.Id == @event.FlightId

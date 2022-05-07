@@ -16,7 +16,7 @@ namespace Transport
         private IModel _channel; // connection channel to RabbitMQ, required to ACK messages
         public EventManager(string dbConnStr)
         {
-            this.RegisterHandler(new ReserveTravelHandler(this.Publish, this.Reply, dbConnStr), typeof(ReserveTravelEvent));
+            this.RegisterHandler(new ReserveTravelHandler(this.Publish, this.Reply, dbConnStr), typeof(BookTravelEvent));
             // register the rest of Handlers + Events
             this.RegisterHandler(new GetAvailableTravelsHandler(this.Publish, this.Reply, dbConnStr), typeof(GetAvailableTravelsEvent));
         }

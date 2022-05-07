@@ -44,7 +44,7 @@ namespace Transport.Tests
                 }
             }.AsQueryable();
             var checkData = data.ToList();
-            var @event = new ReserveTravelEvent(2, 4);
+            var @event = new BookTravelEvent(2, 4);
 
             // setup
             var mockSet = new Mock<DbSet<Travel>>();
@@ -99,7 +99,7 @@ namespace Transport.Tests
                 }
             }.AsQueryable();
             var checkData = data.ToList();
-            var @event = new ReserveTravelEvent(1, 4);
+            var @event = new BookTravelEvent(1, 4);
 
             // setup
             var mockSet = new Mock<DbSet<Travel>>();
