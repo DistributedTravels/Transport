@@ -3,7 +3,6 @@ using Transport.Database.Tables;
 using MassTransit;
 using Transport.Database;
 using Transport.Consumers;
-using Models.Transport;
 using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
