@@ -21,7 +21,7 @@ namespace Transport.Consumers
             if (srcs.Count > 0)
             {
                 Console.WriteLine($"Found destinations: {srcs[0]}");
-                await context.Publish(new GetAvailableSourcesReplyEvent(context.Message.Id, srcs));
+                await context.Publish(new GetAvailableSourcesReplyEvent(context.Message.Id, context.Message.CorrelationId, srcs));
             }
         }
     }

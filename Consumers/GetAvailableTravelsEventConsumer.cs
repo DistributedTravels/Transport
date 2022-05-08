@@ -13,6 +13,7 @@ namespace Transport.Consumers
         private readonly int SeatMin = 80;
         private readonly int SeatMax = 130;
         private readonly Random random = new(); // fancy!
+
         public async Task Consume(ConsumeContext<GetAvailableTravelsEvent> context)
         {
             var @event = context.Message;
@@ -42,14 +43,38 @@ namespace Transport.Consumers
                         res = GenerateTravels(StartDate, dbcon).AsQueryable();
                     }
                     final = FilterResult(res, @event.FreeSeats, @event.Source, @event.Destination);
+                    final = CheckForReservations(final, @event.FreeSeats, dbcon);
                 }
                 // final is null if no transport found
-                await context.Publish(new GetAvailableTravelsReplyEvent(@event.Id, final));
+                await context.Publish(new GetAvailableTravelsReplyEvent(@event.Id, @event.CorrelationId, final));
             }
             else
             {
                 Console.Error.WriteLine("Error deserializing event type: GetAvailableTravelsEvent");
             }
+        }
+
+        public IEnumerable<TravelItem>? CheckForReservations(IEnumerable<TravelItem>? travels, int seats, TransportContext dbcon)
+        {
+            if (travels == null || travels.Count() <= 0)
+                return null;
+            var final = new List<TravelItem>();
+            foreach (var travel in travels)
+            {
+                var res = from reserv in dbcon.Reservations
+                          where reserv.TravelId == travel.TravelId
+                          select reserv.ReservedSeats;
+                if (res.Any())
+                {
+                    travel.AvailableSeats -= res.Aggregate(0, (a, b) => a + b);
+                }
+                if (travel.AvailableSeats >= seats)
+                    final.Add(travel);
+            }
+
+            if (!final.Any())
+                final = null;
+            return final;
         }
 
         public IEnumerable<TravelItem>? FilterResult(IEnumerable<Travel> travels, int freeSeats, string source, string dest)

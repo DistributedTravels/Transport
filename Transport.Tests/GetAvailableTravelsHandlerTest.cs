@@ -8,7 +8,6 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Models.Transport;
 using Models;
-using Transport.Handlers;
 using System.Threading.Tasks;
 
 namespace Transport.Tests

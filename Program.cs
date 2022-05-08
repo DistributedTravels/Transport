@@ -8,8 +8,15 @@ using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-TransportContext.ConnString = builder.Configuration.GetConnectionString("PsqlConnection");
-initDB();
+var ConnString = builder.Configuration.GetConnectionString("PsqlConnection");
+TransportContext.ConnString = ConnString;
+
+builder.Services.AddDbContext<TransportContext>(cfg =>
+{
+    cfg.UseNpgsql(ConnString)
+       .LogTo(Console.WriteLine, LogLevel.Information)
+       .EnableDetailedErrors();
+});
 
 builder.Services.AddMassTransit(cfg =>
 {
@@ -33,10 +40,11 @@ builder.Services.AddMassTransit(cfg =>
 });
 
 var app = builder.Build();
+initDB();
 // bus for publishing a message, to check if everything works
 // THIS SHOULD NOT EXIST IN FINAL PROJECT
 
-var busControl = Bus.Factory.CreateUsingRabbitMq(cfg =>
+/*var busControl = Bus.Factory.CreateUsingRabbitMq(cfg =>
 {
     cfg.Host("rabbitmq", "/", h =>
     {
@@ -46,13 +54,14 @@ var busControl = Bus.Factory.CreateUsingRabbitMq(cfg =>
 });
 busControl.Start();
 await busControl.Publish(new GetAvailableDestinationsEvent());
-busControl.Stop();
+busControl.Stop();*/
 
 app.Run();
 
 void initDB()
 {
-    using (var context = new TransportContext())
+    using (var scope = app.Services.CreateScope())
+    using (var context = scope.ServiceProvider.GetRequiredService<TransportContext>())
     {
         // init DB here?
         context.Database.EnsureCreated();

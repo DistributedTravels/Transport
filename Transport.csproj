@@ -10,10 +10,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Handlers\**" />
     <Compile Remove="Transport.Tests\**" />
+    <Content Remove="Handlers\**" />
     <Content Remove="Transport.Tests\**" />
+    <EmbeddedResource Remove="Handlers\**" />
     <EmbeddedResource Remove="Transport.Tests\**" />
+    <None Remove="Handlers\**" />
     <None Remove="Transport.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="EventManager.cs" />
   </ItemGroup>
 
   <ItemGroup>

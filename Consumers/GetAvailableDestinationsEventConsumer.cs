@@ -20,7 +20,7 @@ namespace Transport.Consumers
             }
             if (dests.Count > 0) {
                 Console.WriteLine($"Found destinations: {dests[0]}");
-                await context.Publish(new GetAvailableDestinationsReplyEvent(context.Message.Id, dests));
+                await context.Publish(new GetAvailableDestinationsReplyEvent(context.Message.Id, context.Message.CorrelationId, dests));
             }
         }
     }
