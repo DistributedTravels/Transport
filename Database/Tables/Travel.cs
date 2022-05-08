@@ -10,7 +10,6 @@ namespace Transport.Database.Tables
         public int Id { get; set; }
         public DateTime DepartureTime { get; set; }
         public int FreeSeats { get; set; }
-
         public string Source { get; set; } // name of departure place
         public string Destination { get; set; } // name of destination place
     }

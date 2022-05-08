@@ -24,6 +24,10 @@ builder.Services.AddMassTransit(cfg =>
     cfg.AddConsumer<BookTravelEventConsumer>();
     cfg.AddConsumer<UnbookTravelEventConsumer>();
     cfg.AddConsumer<GetAvailableDestinationsEventConsumer>();
+    cfg.AddConsumer<GetAvailableSourcesEventConsumer>();
+    cfg.AddConsumer<GetAvailableTravelsEventConsumer>();
+    cfg.AddConsumer<ReserveTravelEventConsumer>();
+    cfg.AddConsumer<UnreserveTravelEventConsumer>();
 
     // telling masstransit to use rabbitmq
     cfg.UsingRabbitMq((context, rabbitCfg) =>
