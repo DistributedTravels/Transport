@@ -18,7 +18,7 @@ namespace Transport.Consumers
                           select travel;
                 if (res.Any())
                 {
-                    dbcon.Reservations.Add(new Reservation { ReservedSeats = @event.Seats, TravelId = @event.TravelId, UserId = @event.UserId});
+                    dbcon.Reservations.Add(new Reservation { ReservedSeats = @event.Seats, TravelId = @event.TravelId, ReserveId = @event.ReserveId});
                     await dbcon.SaveChangesAsync();
                     state = ReserveTravelReplyEvent.State.RESERVED;
                 }

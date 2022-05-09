@@ -72,10 +72,10 @@ void initDB()
             using(var r = new StreamReader(@"Init/dest.json"))
             {
                 string json = r.ReadToEnd();
-                List<string> dests = JsonConvert.DeserializeObject<List<string>>(json);
+                List<(string, int)> dests = JsonConvert.DeserializeObject<List<(string, int)>>(json);
                 foreach(var dest in dests)
                 {
-                    context.Destinations.Add(new Destination { Name = dest });
+                    context.Destinations.Add(new Destination { Name = dest.Item1, Distance = dest.Item2 });
                 }
             }
             using (var r = new StreamReader(@"Init/sources.json"))

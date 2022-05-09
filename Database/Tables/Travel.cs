@@ -12,5 +12,6 @@ namespace Transport.Database.Tables
         public int FreeSeats { get; set; }
         public string Source { get; set; } // name of departure place
         public string Destination { get; set; } // name of destination place
+        public double Price { get; set; }
     }
 }

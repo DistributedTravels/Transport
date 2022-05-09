@@ -9,5 +9,6 @@ namespace Transport.Database.Tables
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Defines it's generated, autoincremented value
         public int Id { get; set; } // When column is called *Id, it's by default a Primary Key unless specified otherwise
         public string Name { get; set; }
+        public int Distance { get; set; }
     }
 }

@@ -20,6 +20,7 @@ namespace Transport.Database
         public virtual DbSet<Travel> Travels { get; set; }
         //public virtual DbSet<Event> Events { get; set; }
         public virtual DbSet<Reservation> Reservations { get; set; }
+        public virtual DbSet<Booking> Bookings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +29,7 @@ namespace Transport.Database
             modelBuilder.Entity<Source>().ToTable("Source");
             //modelBuilder.Entity<Event>().ToTable("Event");
             modelBuilder.Entity<Reservation>().ToTable("Reservation");
+            modelBuilder.Entity<Booking>().ToTable("Booking");
         }
 
         /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) // config overwrite, possibly unneeded (?)

@@ -12,9 +12,7 @@ namespace Transport.Consumers
             using (var dbcon = new TransportContext())
             {
                 var res = from reserv in dbcon.Reservations
-                          where reserv.TravelId == @event.TravelId 
-                            && reserv.UserId == @event.UserId 
-                            && reserv.ReservedSeats == @event.Seats
+                          where reserv.ReserveId == @event.ReserveId
                           select reserv;
                 if (res.Any())
                 {

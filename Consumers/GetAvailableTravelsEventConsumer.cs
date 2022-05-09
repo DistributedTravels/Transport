@@ -19,39 +19,77 @@ namespace Transport.Consumers
             var @event = context.Message;
             if (@event != null)
             {
-                Console.WriteLine($"Event {@event.GetType().Name} received.");
-                // check for flights already for that day
-                var StartDate = @event.DepartureTime.Date;
-                var EndDate = @event.DepartureTime.Date.AddDays(1);
-                IEnumerable<TravelItem>? final;
-                using (var dbcon = new TransportContext())
+                if (@event.TravelId != null)
                 {
-                    var res = from travel in dbcon.Travels
-                              where travel.DepartureTime >= StartDate && travel.DepartureTime < EndDate
-                              select new Travel
-                              {
-                                  Id = travel.Id,
-                                  DepartureTime = travel.DepartureTime,
-                                  FreeSeats = travel.FreeSeats,
-                                  Source = travel.Source,
-                                  Destination = travel.Destination,
-                              };
-
-                    if (!res.Any())
+                    List<TravelItem>? items = new List<TravelItem>();
+                    using(var dbcon = new TransportContext())
                     {
-                        // no flights that day, generate some new ones
-                        res = GenerateTravels(StartDate, dbcon).AsQueryable();
+                        var res = from travel in dbcon.Travels
+                                  where travel.Id == @event.TravelId
+                                  select new Travel
+                                  {
+                                      Id = travel.Id,
+                                      DepartureTime = travel.DepartureTime,
+                                      FreeSeats = travel.FreeSeats,
+                                      Source = travel.Source,
+                                      Destination = travel.Destination,
+                                      Price = travel.Price,
+  
+                                  };
+                        if (res.Any())
+                        {
+                            var data = res.Single();
+                            items.Add(new TravelItem(data.Id, data.Source, data.Destination, data.DepartureTime, data.FreeSeats, data.Price));
+                        } else
+                            items = null;
+                        await context.Publish(new GetAvailableTravelsReplyEvent(@event.Id, @event.CorrelationId, items));
                     }
-                    final = FilterResult(res, @event.FreeSeats, @event.Source, @event.Destination);
-                    final = CheckForReservations(final, @event.FreeSeats, dbcon);
                 }
-                // final is null if no transport found
-                await context.Publish(new GetAvailableTravelsReplyEvent(@event.Id, @event.CorrelationId, final));
+                else
+                {
+                    Console.WriteLine($"Event {@event.GetType().Name} received.");
+                    // check for flights already for that day
+                    var StartDate = @event.DepartureTime.Date;
+                    var EndDate = @event.DepartureTime.Date.AddDays(1);
+                    IEnumerable<TravelItem>? final;
+                    using (var dbcon = new TransportContext())
+                    {
+                        var res = from travel in dbcon.Travels
+                                  where travel.DepartureTime >= StartDate && travel.DepartureTime < EndDate
+                                  select new Travel
+                                  {
+                                      Id = travel.Id,
+                                      DepartureTime = travel.DepartureTime,
+                                      FreeSeats = travel.FreeSeats,
+                                      Source = travel.Source,
+                                      Destination = travel.Destination,
+                                  };
+
+                        if (!res.Any())
+                        {
+                            // no flights that day, generate some new ones
+                            res = GenerateTravels(StartDate, dbcon).AsQueryable();
+                        }
+                        final = FilterResult(res, @event.FreeSeats, @event.Source, @event.Destination);
+                        final = CheckForReservations(final, @event.FreeSeats, dbcon);
+                    }
+                    // final is null if no transport found
+                    await context.Publish(new GetAvailableTravelsReplyEvent(@event.Id, @event.CorrelationId, final));
+                }
             }
             else
             {
                 Console.Error.WriteLine("Error deserializing event type: GetAvailableTravelsEvent");
             }
+        }
+
+        public double UpdatePrice(string dest, TransportContext context)
+        {
+            var dist = from destin in context.Destinations
+                        where dest == destin.Name
+                        select destin.Distance;
+            var price = dist.Single() / 2.0 + random.NextDouble() * 300;
+            return Math.Round(price, 2);
         }
 
         public IEnumerable<TravelItem>? CheckForReservations(IEnumerable<TravelItem>? travels, int seats, TransportContext dbcon)
@@ -88,7 +126,7 @@ namespace Transport.Consumers
 
             var final = new List<TravelItem>();
             foreach (var travel in tmp)
-                final.Add(new TravelItem(travel.Id, travel.Source, travel.Destination, travel.DepartureTime, travel.FreeSeats));
+                final.Add(new TravelItem(travel.Id, travel.Source, travel.Destination, travel.DepartureTime, travel.FreeSeats, 0));
 
             if (final.Count == 0)
                 return null;
@@ -118,7 +156,8 @@ namespace Transport.Consumers
                         DepartureTime = date.AddHours(random.Next(0, 23)).AddMinutes(random.Next(0, 11) * 5),
                         Source = source,
                         Destination = dest,
-                        FreeSeats = random.Next(SeatMin, SeatMax)
+                        FreeSeats = random.Next(SeatMin, SeatMax),
+                        Price = UpdatePrice(dest, context)
                     });
                     // generate new tranport from every dest to each source
                     generated.Add(new Travel
@@ -126,7 +165,8 @@ namespace Transport.Consumers
                         DepartureTime = date.AddHours(random.Next(0, 23)).AddMinutes(random.Next(0, 11) * 5),
                         Source = dest,
                         Destination = source,
-                        FreeSeats = random.Next(SeatMin, SeatMax)
+                        FreeSeats = random.Next(SeatMin, SeatMax),
+                        Price = UpdatePrice(dest, context)
                     });
                 }
             }

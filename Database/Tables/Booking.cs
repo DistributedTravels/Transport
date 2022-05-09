@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations.Schema; // for Identity
 
 namespace Transport.Database.Tables
 {
-    public class Reservation
+    public class Booking
     {
         [Key]
-        public Guid ReserveId { get; set; }
+        public Guid BookedId { get; set; } // same as reservation ID
         public int TravelId { get; set; }
         public int ReservedSeats { get; set; }
     }
