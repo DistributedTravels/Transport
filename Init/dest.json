@@ -1,1 +1,21 @@
-[["Albania", 1223], ["Bułgaria", 1109], ["Cypr", 2154], ["Czarnogóra", 1030], ["Czechy", 400], ["Egipt", 2900], ["Grecja", 1453], ["Gruzja", 2086], ["Hiszpania", 2266], ["Madera", 3646], ["Malta", 1841], ["Mauritius", 8827], ["Polska", 300], ["Portugalia", 2548], ["Tunezja", 2186], ["Turcja", 1851], ["Wyspy Kanaryjskie", 3965], ["Wyspy Zielonego Przylądka", 5558], ["Włochy", 1151]]
+[
+  { "destination": "Albania", "distance": 1223 },
+  { "destination": "Bułgaria", "distance": 1109 },
+  { "destination": "Cypr", "distance": 2154 },
+  { "destination":"Czarnogóra", "distance":1030 },
+  { "destination":"Czechy", "distance":400 },
+  { "destination":"Egipt", "distance":2900 },
+  { "destination":"Grecja", "distance":1453 },
+  { "destination":"Gruzja", "distance":2086 },
+  { "destination":"Hiszpania", "distance":2266 },
+  { "destination":"Madera", "distance":3646 },
+  { "destination":"Malta", "distance":1841 },
+  { "destination":"Mauritius", "distance":8827 },
+  { "destination":"Polska", "distance":300 },
+  { "destination":"Portugalia", "distance":2548 },
+  { "destination":"Tunezja", "distance":2186 },
+  { "destination":"Turcja", "distance":1851 },
+  { "destination":"Wyspy Kanaryjskie","distance":3965 },
+  { "destination":"Wyspy Zielonego Przylądka", "distance":5558 },
+  { "destination":"Włochy", "distance":1151 }
+]
