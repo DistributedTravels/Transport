@@ -46,7 +46,7 @@ namespace Transport.Consumers
                             items.Add(new TravelItem(data.Id, data.Source, data.Destination, data.DepartureTime, data.FreeSeats -  reserved, data.Price));
                         } else
                             items = null;
-                        await context.Publish(new GetAvailableTravelsReplyEvent(@event.Id, @event.CorrelationId, items));
+                        await context.RespondAsync(new GetAvailableTravelsReplyEvent(@event.Id, @event.CorrelationId, items));
                     }
                 }
                 else
