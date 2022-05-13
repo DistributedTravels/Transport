@@ -36,10 +36,14 @@ namespace Transport.Consumers
                                       Price = travel.Price,
   
                                   };
+                        var reserv = from reservations in dbcon.Reservations
+                                     where reservations.TravelId == @event.TravelId
+                                     select reservations.ReservedSeats;
+                        var reserved = reserv.Any() ? reserv.Aggregate(0, (a, b) => a + b) : 0;
                         if (res.Any())
                         {
                             var data = res.Single();
-                            items.Add(new TravelItem(data.Id, data.Source, data.Destination, data.DepartureTime, data.FreeSeats, data.Price));
+                            items.Add(new TravelItem(data.Id, data.Source, data.Destination, data.DepartureTime, data.FreeSeats -  reserved, data.Price));
                         } else
                             items = null;
                         await context.Publish(new GetAvailableTravelsReplyEvent(@event.Id, @event.CorrelationId, items));
