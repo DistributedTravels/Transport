@@ -29,7 +29,7 @@ namespace Transport.Consumers
                                   select new Travel
                                   {
                                       Id = travel.Id,
-                                      DepartureTime = travel.DepartureTime,
+                                      DepartureTime = travel.DepartureTime.ToUniversalTime(),
                                       FreeSeats = travel.FreeSeats,
                                       Source = travel.Source,
                                       Destination = travel.Destination,
@@ -53,8 +53,8 @@ namespace Transport.Consumers
                 {
                     Console.WriteLine($"Event {@event.GetType().Name} received.");
                     // check for flights already for that day
-                    var StartDate = @event.DepartureTime.Date;
-                    var EndDate = @event.DepartureTime.Date.AddDays(1);
+                    var StartDate = @event.DepartureTime.Date.ToUniversalTime();
+                    var EndDate = @event.DepartureTime.Date.AddDays(1).ToUniversalTime();
                     IEnumerable<TravelItem>? final;
                     using (var dbcon = new TransportContext())
                     {
@@ -63,7 +63,7 @@ namespace Transport.Consumers
                                   select new Travel
                                   {
                                       Id = travel.Id,
-                                      DepartureTime = travel.DepartureTime,
+                                      DepartureTime = travel.DepartureTime.ToUniversalTime(),
                                       FreeSeats = travel.FreeSeats,
                                       Source = travel.Source,
                                       Destination = travel.Destination,
@@ -143,12 +143,12 @@ namespace Transport.Consumers
             var generated = new List<Travel>();
 
             var sources = (from source in context.Sources
-                           orderby Guid.NewGuid() // introducing random order
-                           select source.Name).Take(GenerationSourceCount);
+                           //orderby Guid.NewGuid() // introducing random order
+                           select source.Name).ToList().OrderBy(s => Guid.NewGuid()).Take(GenerationSourceCount).ToList();
 
             var destinations = (from dest in context.Destinations
-                                orderby Guid.NewGuid() // introducing random order
-                                select dest.Name).Take(GenerationDestinationCount);
+                                //orderby Guid.NewGuid() // introducing random order
+                                select dest.Name).ToList().OrderBy(d => Guid.NewGuid()).Take(GenerationDestinationCount).ToList();
 
             foreach (var dest in destinations)
             {
