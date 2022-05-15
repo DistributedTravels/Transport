@@ -18,7 +18,7 @@ namespace Transport.Consumers
             }
         }
 
-        public async Task<int?> UpdateFlightSeats(TransportContext context, UnbookTravelEvent @event)
+        private async Task<int?> UpdateFlightSeats(TransportContext context, UnbookTravelEvent @event)
         {
             var res = from travels in context.Travels
                       where travels.Id == @event.FlightId

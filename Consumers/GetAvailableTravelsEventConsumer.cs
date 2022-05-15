@@ -21,7 +21,7 @@ namespace Transport.Consumers
             {
                 if (@event.TravelId != null)
                 {
-                    List<TravelItem>? items = new List<TravelItem>();
+                    List<TravelItem> items = new();
                     using(var dbcon = new TransportContext())
                     {
                         var res = from travel in dbcon.Travels
@@ -44,15 +44,13 @@ namespace Transport.Consumers
                         {
                             var data = res.Single();
                             items.Add(new TravelItem(data.Id, data.Source, data.Destination, data.DepartureTime, data.FreeSeats -  reserved, data.Price));
-                        } else
-                            items = null;
+                        }
                         await context.RespondAsync(new GetAvailableTravelsReplyEvent(@event.Id, @event.CorrelationId, items));
                     }
                 }
                 else
                 {
                     Console.WriteLine($"Event {@event.GetType().Name} received.");
-                    // check for flights already for that day
                     var StartDate = @event.DepartureTime.Date.ToUniversalTime();
                     var EndDate = @event.DepartureTime.Date.AddDays(1).ToUniversalTime();
                     IEnumerable<TravelItem>? final;
@@ -87,7 +85,7 @@ namespace Transport.Consumers
             }
         }
 
-        public double UpdatePrice(string dest, TransportContext context)
+        private double UpdatePrice(string dest, TransportContext context)
         {
             var dist = from destin in context.Destinations
                         where dest == destin.Name
@@ -96,10 +94,10 @@ namespace Transport.Consumers
             return Math.Round(price, 2);
         }
 
-        public IEnumerable<TravelItem>? CheckForReservations(IEnumerable<TravelItem>? travels, int seats, TransportContext dbcon)
+        private IEnumerable<TravelItem> CheckForReservations(IEnumerable<TravelItem> travels, int seats, TransportContext dbcon)
         {
-            if (travels == null || travels.Count() <= 0)
-                return null;
+            if (travels.Count() <= 0)
+                return travels;
             var final = new List<TravelItem>();
             foreach (var travel in travels)
             {
@@ -114,12 +112,10 @@ namespace Transport.Consumers
                     final.Add(travel);
             }
 
-            if (!final.Any())
-                final = null;
             return final;
         }
 
-        public IEnumerable<TravelItem>? FilterResult(IEnumerable<Travel> travels, int freeSeats, string source, string dest)
+        private IEnumerable<TravelItem> FilterResult(IEnumerable<Travel> travels, int freeSeats, string source, string dest)
         {
             var tmp = new List<Travel>();
             foreach (var travel in travels)
@@ -130,15 +126,12 @@ namespace Transport.Consumers
 
             var final = new List<TravelItem>();
             foreach (var travel in tmp)
-                final.Add(new TravelItem(travel.Id, travel.Source, travel.Destination, travel.DepartureTime, travel.FreeSeats, 0));
-
-            if (final.Count == 0)
-                return null;
+                final.Add(new TravelItem(travel.Id, travel.Source, travel.Destination, travel.DepartureTime, travel.FreeSeats, travel.Price));
 
             return final;
         }
 
-        public IEnumerable<Travel> GenerateTravels(DateTime date, TransportContext context)
+        private IEnumerable<Travel> GenerateTravels(DateTime date, TransportContext context)
         {
             var generated = new List<Travel>();
 

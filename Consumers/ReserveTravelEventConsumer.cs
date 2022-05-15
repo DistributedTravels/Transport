@@ -13,14 +13,20 @@ namespace Transport.Consumers
             var state = ReserveTravelReplyEvent.State.NOT_RESERVED;
             using(var dbcon = new TransportContext())
             {
-                var res = from travel in dbcon.Travels
-                          where travel.Id == @event.TravelId && travel.FreeSeats >= @event.Seats
-                          select travel;
-                if (res.Any())
+                var check = from reserv in dbcon.Reservations
+                            where reserv.ReserveId == @event.ReserveId
+                            select reserv;
+                if (!check.Any())
                 {
-                    dbcon.Reservations.Add(new Reservation { ReservedSeats = @event.Seats, TravelId = @event.TravelId, ReserveId = @event.ReserveId});
-                    await dbcon.SaveChangesAsync();
-                    state = ReserveTravelReplyEvent.State.RESERVED;
+                    var res = from travel in dbcon.Travels
+                              where travel.Id == @event.TravelId && travel.FreeSeats >= @event.Seats
+                              select travel;
+                    if (res.Any())
+                    {
+                        dbcon.Reservations.Add(new Reservation { ReservedSeats = @event.Seats, TravelId = @event.TravelId, ReserveId = @event.ReserveId });
+                        await dbcon.SaveChangesAsync();
+                        state = ReserveTravelReplyEvent.State.RESERVED;
+                    }
                 }
             }
             await context.Publish(new ReserveTravelReplyEvent(state, @event.CorrelationId));

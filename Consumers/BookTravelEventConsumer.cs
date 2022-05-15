@@ -16,7 +16,7 @@ namespace Transport.Consumers
                 // remove reservation
                 var reserv = await RemoveReservation(dbcon, @event);
                 if (reserv == null)
-                    return; // ERROR
+                    return;
                 // set booking
                 var ret = await AddBooking(dbcon, reserv);
                 if (!ret)
@@ -28,7 +28,7 @@ namespace Transport.Consumers
             }
         }
 
-        public async Task<Reservation?> RemoveReservation(TransportContext context, BookTravelEvent @event)
+        private async Task<Reservation?> RemoveReservation(TransportContext context, BookTravelEvent @event)
         {
             var reserv = from rsrv in context.Reservations
                          where rsrv.ReserveId == @event.ReserveId
@@ -43,7 +43,7 @@ namespace Transport.Consumers
             return null;
         }
 
-        public async Task<bool> AddBooking(TransportContext context, Reservation reserv)
+        private async Task<bool> AddBooking(TransportContext context, Reservation reserv)
         {
             var seats = from travel in context.Travels
                         where travel.Id == reserv.TravelId
@@ -64,7 +64,7 @@ namespace Transport.Consumers
             return true;
         }
 
-        public async Task<int?> UpdateFlightSeats(TransportContext context, Reservation rsrv)
+        private async Task<int?> UpdateFlightSeats(TransportContext context, Reservation rsrv)
         {
             var res = from travels in context.Travels
                       where travels.Id == rsrv.TravelId
