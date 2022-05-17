@@ -13,6 +13,7 @@ namespace Transport.Consumers
         private readonly int SeatMin = 80;
         private readonly int SeatMax = 130;
         private readonly Random random = new(); // fancy!
+        private readonly bool debug = true;
 
         public async Task Consume(ConsumeContext<GetAvailableTravelsEvent> context)
         {
@@ -142,6 +143,14 @@ namespace Transport.Consumers
             var destinations = (from dest in context.Destinations
                                 //orderby Guid.NewGuid() // introducing random order
                                 select dest.Name).ToList().OrderBy(d => Guid.NewGuid()).Take(GenerationDestinationCount).ToList();
+
+            if (debug)
+            {
+                if (!destinations.Contains("Hiszpania"))
+                    destinations.Append("Hiszpania");
+                if (!sources.Contains("Warszawa"))
+                    sources.Append("Warszawa");
+            }
 
             foreach (var dest in destinations)
             {
