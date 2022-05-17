@@ -18,7 +18,6 @@ namespace Transport.Database
         public virtual DbSet<Destination> Destinations { get; set; } // table definition
         public virtual DbSet<Source> Sources { get; set; }
         public virtual DbSet<Travel> Travels { get; set; }
-        //public virtual DbSet<Event> Events { get; set; }
         public virtual DbSet<Reservation> Reservations { get; set; }
         public virtual DbSet<Booking> Bookings { get; set; }
 
@@ -27,7 +26,6 @@ namespace Transport.Database
             modelBuilder.Entity<Destination>().ToTable("Destination"); // table name overwrite (removing the plural "s")
             modelBuilder.Entity<Travel>().ToTable("Travel");
             modelBuilder.Entity<Source>().ToTable("Source");
-            //modelBuilder.Entity<Event>().ToTable("Event");
             modelBuilder.Entity<Reservation>().ToTable("Reservation");
             modelBuilder.Entity<Booking>().ToTable("Booking");
         }
