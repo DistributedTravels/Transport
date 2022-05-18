@@ -11,6 +11,7 @@ namespace Transport.Consumers
         {
             var @event = context.Message;
             var state = ReserveTravelReplyEvent.State.NOT_RESERVED;
+            double price = 0;
             using(var dbcon = new TransportContext())
             {
                 var check = from reserv in dbcon.Reservations
@@ -26,10 +27,11 @@ namespace Transport.Consumers
                         dbcon.Reservations.Add(new Reservation { ReservedSeats = @event.Seats, TravelId = @event.TravelId, ReserveId = @event.ReserveId });
                         await dbcon.SaveChangesAsync();
                         state = ReserveTravelReplyEvent.State.RESERVED;
+                        price = res.Single().Price;
                     }
                 }
             }
-            await context.Publish(new ReserveTravelReplyEvent(state, @event.CorrelationId));
+            await context.Publish(new ReserveTravelReplyEvent(state, @event.CorrelationId, price));
         }
     }
 }
