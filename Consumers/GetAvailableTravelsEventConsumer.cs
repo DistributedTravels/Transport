@@ -37,9 +37,9 @@ namespace Transport.Consumers
                                       Price = travel.Price,
   
                                   };
-                        var reserv = from reservations in dbcon.Reservations
+                        var reserv = (from reservations in dbcon.Reservations
                                      where reservations.TravelId == @event.TravelId
-                                     select reservations.ReservedSeats;
+                                     select reservations.ReservedSeats).ToList();
                         var reserved = reserv.Any() ? reserv.Aggregate(0, (a, b) => a + b) : 0;
                         if (res.Any())
                         {
@@ -102,9 +102,9 @@ namespace Transport.Consumers
             var final = new List<TravelItem>();
             foreach (var travel in travels)
             {
-                var res = from reserv in dbcon.Reservations
+                var res = (from reserv in dbcon.Reservations
                           where reserv.TravelId == travel.TravelId
-                          select reserv.ReservedSeats;
+                          select reserv.ReservedSeats).ToList();
                 if (res.Any())
                 {
                     travel.AvailableSeats -= res.Aggregate(0, (a, b) => a + b);
@@ -147,9 +147,9 @@ namespace Transport.Consumers
             if (debug)
             {
                 if (!destinations.Contains("Hiszpania"))
-                    destinations.Append("Hiszpania");
+                    destinations.Add("Hiszpania");
                 if (!sources.Contains("Warszawa"))
-                    sources.Append("Warszawa");
+                    sources.Add("Warszawa");
             }
 
             foreach (var dest in destinations)
