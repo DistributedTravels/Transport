@@ -38,8 +38,9 @@ namespace Transport.Consumers
   
                                   };
                         var reserv = (from reservations in dbcon.Reservations
-                                     where reservations.TravelId == @event.TravelId
-                                     select reservations.ReservedSeats).ToList();
+                                      where reservations.TravelId == @event.TravelId
+                                      && (reservations.State == ReservationState.RESERVED || reservations.State == ReservationState.PURCHASED)
+                                      select reservations.ReservedSeats).ToList();
                         var reserved = reserv.Any() ? reserv.Aggregate(0, (a, b) => a + b) : 0;
                         if (res.Any())
                         {
@@ -103,8 +104,9 @@ namespace Transport.Consumers
             foreach (var travel in travels)
             {
                 var res = (from reserv in dbcon.Reservations
-                          where reserv.TravelId == travel.TravelId
-                          select reserv.ReservedSeats).ToList();
+                           where reserv.TravelId == travel.TravelId
+                           && (reserv.State == ReservationState.RESERVED || reserv.State == ReservationState.PURCHASED)
+                           select reserv.ReservedSeats).ToList();
                 if (res.Any())
                 {
                     travel.AvailableSeats -= res.Aggregate(0, (a, b) => a + b);

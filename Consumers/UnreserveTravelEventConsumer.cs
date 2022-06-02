@@ -1,6 +1,7 @@
 ﻿using MassTransit;
 using Models.Transport;
 using Transport.Database;
+using Transport.Database.Tables;
 
 namespace Transport.Consumers
 {
@@ -16,7 +17,8 @@ namespace Transport.Consumers
                           select reserv;
                 if (res.Any())
                 {
-                    dbcon.Remove(res.Single());
+                    var reserve = res.Single();
+                    reserve.State = ReservationState.UNRESERVED;
                     await dbcon.SaveChangesAsync();
                 }
             }

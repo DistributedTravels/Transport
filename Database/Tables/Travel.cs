@@ -15,8 +15,6 @@ namespace Transport.Database.Tables
         public string Destination { get; set; } // name of destination place
         public double Price { get; set; }
 
-
         public List<Reservation> Reservations { get; set; }
-        public List<Booking> Bookings { get; set; }
     }
 }

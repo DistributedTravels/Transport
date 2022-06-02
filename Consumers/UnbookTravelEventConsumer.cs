@@ -1,24 +1,31 @@
 ﻿using MassTransit;
 using Models.Transport;
 using Transport.Database;
+using Transport.Database.Tables;
 
 namespace Transport.Consumers
 {
-    public class UnbookTravelEventConsumer : IConsumer<UnbookTravelEvent>
+    public class UnbookTravelEventConsumer : IConsumer<UnpurchaseTravelEvent>
     {
-        public async Task Consume(ConsumeContext<UnbookTravelEvent> context)
+        public async Task Consume(ConsumeContext<UnpurchaseTravelEvent> context)
         {
             var @event = context.Message;
-            Console.WriteLine($"Event received to unbook {@event.Seats} seats for flight {@event.FlightId}.");
             using (var dbcon = new TransportContext())
             {
-                var res = await UpdateFlightSeats(dbcon, @event);
-                if (res == null)
-                    Console.Error.WriteLine($"Error updating seats, no flight found with id: {@event.FlightId}");
+                var res = from reservation in dbcon.Reservations
+                          where reservation.ReserveId == @event.ReserveId
+                          select reservation;
+
+                if (res.Any())
+                {
+                    var reserv = res.Single();
+                    reserv.State = ReservationState.INVALIDATED;
+                    await dbcon.SaveChangesAsync();
+                }
             }
         }
 
-        private async Task<int?> UpdateFlightSeats(TransportContext context, UnbookTravelEvent @event)
+        /*private async Task<int?> UpdateFlightSeats(TransportContext context, UnbookTravelEvent @event)
         {
             var res = from travels in context.Travels
                       where travels.Id == @event.FlightId
@@ -31,6 +38,6 @@ namespace Transport.Consumers
                 return travel.FreeSeats;
             }
             return null;
-        }
+        }*/
     }
 }

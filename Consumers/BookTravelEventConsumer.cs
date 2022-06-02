@@ -5,33 +5,33 @@ using Transport.Database.Tables;
 
 namespace Transport.Consumers
 {
-    public class BookTravelEventConsumer : IConsumer<BookTravelEvent>
+    public class BookTravelEventConsumer : IConsumer<PurchaseTravelEvent>
     {
-        public async Task Consume(ConsumeContext<BookTravelEvent> context)
+        public async Task Consume(ConsumeContext<PurchaseTravelEvent> context)
         {
             var @event = context.Message;
-            Console.WriteLine($"Event received to book seats for reservation: {@event.ReserveId}.");
             using (var dbcon = new TransportContext())
             {
-                // remove reservation
-                var reserv = await RemoveReservation(dbcon, @event);
-                if (reserv == null)
-                    return;
-                // set booking
-                var ret = await AddBooking(dbcon, reserv);
-                if (!ret)
-                    return;
-                // update flightseats
-                var res = await UpdateFlightSeats(dbcon, reserv);
-                if (res == null)
-                    Console.Error.WriteLine($"Couldn't update flight seat numbers");
+                // change reservation state if there is reservation
+                var reserv = from rsrv in dbcon.Reservations
+                             where rsrv.ReserveId == @event.ReserveId
+                             && rsrv.State == ReservationState.RESERVED
+                             select rsrv;
+                if (reserv.Any())
+                {
+                    var data = reserv.Single();
+                    data.State = ReservationState.PURCHASED;
+                    Console.WriteLine($"Seats purchased for reservation: {@event.ReserveId} for travel: {data.TravelId}.");
+                    await dbcon.SaveChangesAsync();  
+                }
             }
         }
 
-        private async Task<Reservation?> RemoveReservation(TransportContext context, BookTravelEvent @event)
+        /*private async Task<Reservation?> UpdateReservation(TransportContext context, BookTravelEvent @event)
         {
             var reserv = from rsrv in context.Reservations
                          where rsrv.ReserveId == @event.ReserveId
+                         && rsrv.State == Reservation.ReservationState.RESERVED
                          select rsrv;
             if (reserv.Any())
             {
@@ -77,6 +77,6 @@ namespace Transport.Consumers
                 return travel.FreeSeats;
             }
             return null;
-        }
+        }*/
     }
 }

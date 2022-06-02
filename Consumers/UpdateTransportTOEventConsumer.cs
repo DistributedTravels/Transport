@@ -18,9 +18,6 @@ namespace Transport.Consumers
                 case UpdateTransportTOEvent.Tables.DESTINATION:
                     await HandleDestinationUpdate(@event.DestinationDetails, @event.Action);
                     break;
-                case UpdateTransportTOEvent.Tables.SOURCE:
-                    await HandleSourceUpdate(@event.SourceDetails, @event.Action);
-                    break;
                 case UpdateTransportTOEvent.Tables.TRAVEL:
                     await HandleTravelUpdate(@event.TravelDetails, @event.Action);
                     break;
@@ -36,56 +33,18 @@ namespace Transport.Consumers
                 var dest = from destination in context.Destinations where destination.Name == dcd.Name select destination;
                 switch (action)
                 {
-                    case UpdateTransportTOEvent.Actions.NEW:
-                        if (!dest.Any() && dcd.Name.Length > 0 && dcd.Distance >= 0)
-                            context.Add(new Destination { Name = dcd.Name, Distance = dcd.Distance });
-                        break;
                     case UpdateTransportTOEvent.Actions.UPDATE:
                         if (dest.Any())
                         {
                             var single = dest.Single();
-                            single.Distance = dcd.Distance >= 0 ? dcd.Distance : single.Distance;
-                            single.Name = dcd.Name.Length > 0 ? dcd.NewName : single.Name;
+                            single.Distance = dcd.Distance >= 0 ? dcd.Distance : single.Distance; // only affects price
                         }
-                        break;
-                    case UpdateTransportTOEvent.Actions.DELETE:
-                        if (dest.Any())
-                            context.Remove(dest.Single());
                         break;
                     default:
                         break;
                 }
                 if (context.ChangeTracker.HasChanges())
                     Console.WriteLine($"Transport: Change {action} in table DESTINATION");
-
-                await context.SaveChangesAsync();
-            }
-        }
-
-        public async Task HandleSourceUpdate(SourceChangeDto scd, UpdateTransportTOEvent.Actions action)
-        {
-            using (var context = new TransportContext())
-            {
-                var src = from source in context.Sources where source.Name == scd.Name select source;
-                switch (action)
-                {
-                    case UpdateTransportTOEvent.Actions.NEW:
-                        if (!src.Any() && scd.Name.Length > 0)
-                            context.Add(new Source { Name = scd.Name });
-                        break;
-                    case UpdateTransportTOEvent.Actions.UPDATE:
-                        if (src.Any() && scd.NewName.Length > 0)
-                            src.Single().Name = scd.NewName;
-                        break;
-                    case UpdateTransportTOEvent.Actions.DELETE:
-                        if (src.Any())
-                            context.Remove(src.Single());
-                        break;
-                    default:
-                        break;
-                }
-                if (context.ChangeTracker.HasChanges())
-                    Console.WriteLine($"Transport: Change {action} in table SOURCE");
 
                 await context.SaveChangesAsync();
             }

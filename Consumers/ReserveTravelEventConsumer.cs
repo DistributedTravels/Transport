@@ -22,12 +22,20 @@ namespace Transport.Consumers
                     var res = from travel in dbcon.Travels
                               where travel.Id == @event.TravelId && travel.FreeSeats >= @event.Seats
                               select travel;
+                    var reserv = (from reservations in dbcon.Reservations
+                                  where reservations.TravelId == @event.TravelId 
+                                  && (reservations.State == ReservationState.RESERVED || reservations.State == ReservationState.PURCHASED)
+                                  select reservations.ReservedSeats).ToList();
+                    var reserved = reserv.Any() ? reserv.Aggregate(0, (a, b) => a + b) : 0;
                     if (res.Any())
                     {
-                        dbcon.Reservations.Add(new Reservation { ReservedSeats = @event.Seats, TravelId = @event.TravelId, ReserveId = @event.ReserveId });
-                        await dbcon.SaveChangesAsync();
-                        state = ReserveTravelReplyEvent.State.RESERVED;
-                        price = res.Single().Price;
+                        var trav = res.Single();
+                        if (@event.Seats + reserved <= trav.FreeSeats) {
+                            dbcon.Reservations.Add(new Reservation { ReservedSeats = @event.Seats, TravelId = @event.TravelId, ReserveId = @event.ReserveId, State = ReservationState.RESERVED });
+                            await dbcon.SaveChangesAsync();
+                            state = ReserveTravelReplyEvent.State.RESERVED;
+                            price = trav.Price;
+                        }
                     }
                 }
             }
