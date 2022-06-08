@@ -66,20 +66,14 @@ app.Run();
         });
     });
     busControl.Start();
-    /* testing Travel table */
-    /*await busControl.Publish(new UpdateTransportTOEvent()
+
+    await busControl.Publish(new UpdateTransportTOEvent()
     {
         Action = UpdateTransportTOEvent.Actions.NEW,
         Table = UpdateTransportTOEvent.Tables.TRAVEL,
-        TravelDetails = new TravelChangeDto { Source = "Abcd" }
+        TravelDetails = new TravelChangeDto { Source = "Warszawa", Destination = "Hiszpania", AvailableSeats = 20, DepartureTime = DateTime.Now.AddDays(20), Price = 1869.25 }
     });
-    await Task.Delay(4000);*/
-    /*await busControl.Publish(new UpdateTransportTOEvent()
-    {
-        Action = UpdateTransportTOEvent.Actions.NEW,
-        Table = UpdateTransportTOEvent.Tables.TRAVEL,
-        TravelDetails = new TravelChangeDto { Source = "Warszawa", Destination = "Hiszpania", AvailableSeats = 10, DepartureTime = DateTime.Now, Price = 1869.25 }
-    });
+
     await Task.Delay(4000);
     var guid = Guid.NewGuid();
     await busControl.Publish(new ReserveTravelEvent() { TravelId = 1, ReserveId = guid, Seats = 5 });
@@ -92,36 +86,44 @@ app.Run();
     await busControl.Publish(new ReserveTravelEvent() { TravelId = 1, ReserveId = guid, Seats = 7 });
 
     await Task.Delay(4000);
-    // should fail to set reservation
     await busControl.Publish(new ReserveTravelEvent() { TravelId = 1, ReserveId = Guid.NewGuid(), Seats = 7 });
 
     await Task.Delay(4000);
     await busControl.Publish(new PurchaseTravelEvent() { ReserveId = guid});
 
     await Task.Delay(4000);
-    await busControl.Publish(new UnpurchaseTravelEvent() { ReserveId = guid });
-    /*await busControl.Publish(new UpdateTransportTOEvent()
+    await busControl.Publish(new UpdateTransportTOEvent()
     {
         Action = UpdateTransportTOEvent.Actions.UPDATE,
         Table = UpdateTransportTOEvent.Tables.TRAVEL,
         TravelDetails = new TravelChangeDto { Id = 1, Price = 226.99 }
     });
+    
     await Task.Delay(4000);
     await busControl.Publish(new UpdateTransportTOEvent()
     {
-        Action = UpdateTransportTOEvent.Actions.DELETE,
+        Action = UpdateTransportTOEvent.Actions.UPDATE,
         Table = UpdateTransportTOEvent.Tables.TRAVEL,
-        TravelDetails = new TravelChangeDto {}
+        TravelDetails = new TravelChangeDto { Id = 1, AvailableSeats = 15, Price = 222.69 }
     });
     await Task.Delay(4000);
+
+    await busControl.Publish(new UpdateTransportTOEvent()
+    {
+        Action = UpdateTransportTOEvent.Actions.UPDATE,
+        Table = UpdateTransportTOEvent.Tables.TRAVEL,
+        TravelDetails = new TravelChangeDto { Id = 1, AvailableSeats = 10, Price = 222.69 }
+    });
+    await Task.Delay(4000);
+
     await busControl.Publish(new UpdateTransportTOEvent()
     {
         Action = UpdateTransportTOEvent.Actions.DELETE,
         Table = UpdateTransportTOEvent.Tables.TRAVEL,
-        TravelDetails = new TravelChangeDto { Id = 1, Source = "Efgh" }
-    });*/
-    /* end of tests */
-    /*busControl.Stop();
+        TravelDetails = new TravelChangeDto { Id = 1 }
+    });
+    // end of tests 
+    busControl.Stop();
 }*/
 
 void initDB()
