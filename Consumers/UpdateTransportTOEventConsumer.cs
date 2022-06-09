@@ -34,10 +34,10 @@ namespace Transport.Consumers
                 {
                     case UpdateTransportTOEvent.Actions.NEW:
                         if (!trvl.Any())
-                            if (tcd.Destination >= 0 
-                                && ((tcd.Destination < 19 && !tcd.Direction) || (tcd.Destination < 10 && tcd.Direction))
-                                && tcd.Source >= 0 
-                                && ((tcd.Source < 10 && !tcd.Direction) || (tcd.Source < 19 && tcd.Direction))
+                            if (tcd.Destination > 0 
+                                && ((tcd.Destination <= 19 && !tcd.Direction) || (tcd.Destination <= 10 && tcd.Direction))
+                                && tcd.Source > 0 
+                                && ((tcd.Source <= 10 && !tcd.Direction) || (tcd.Source <= 19 && tcd.Direction))
                                 && tcd.AvailableSeats >= 0 
                                 && tcd.DepartureTime > DateTime.UtcNow 
                                 && tcd.Price > 0)
