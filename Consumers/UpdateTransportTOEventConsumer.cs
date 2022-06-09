@@ -2,6 +2,7 @@
 using Models.Transport;
 using Models.Transport.Dto;
 using Models.Reservations;
+using Models.Offers;
 using Transport.Database;
 using Transport.Database.Tables;
 using Newtonsoft.Json;
@@ -33,13 +34,21 @@ namespace Transport.Consumers
                 {
                     case UpdateTransportTOEvent.Actions.NEW:
                         if (!trvl.Any())
-                            if (tcd.Destination.Length > 0 && tcd.Source.Length > 0 && tcd.AvailableSeats >= 0 && tcd.DepartureTime > DateTime.UtcNow && tcd.Price > 0)
+                            if (tcd.Destination >= 0 
+                                && ((tcd.Destination < 19 && !tcd.Direction) || (tcd.Destination < 10 && tcd.Direction))
+                                && tcd.Source >= 0 
+                                && ((tcd.Source < 10 && !tcd.Direction) || (tcd.Source < 19 && tcd.Direction))
+                                && tcd.AvailableSeats >= 0 
+                                && tcd.DepartureTime > DateTime.UtcNow 
+                                && tcd.Price > 0)
                             {
-                                context.Add(new Travel { DepartureTime = tcd.DepartureTime.ToUniversalTime(), Source = tcd.Source, Destination = tcd.Destination, FreeSeats = tcd.AvailableSeats, Price = tcd.Price });
+                                var src = (from source in context.Sources where source.Id == tcd.Source select source.Name).Single();
+                                var dest = (from destination in context.Destinations where destination.Id == tcd.Destination select destination.Name).Single();
+                                context.Add(new Travel { DepartureTime = tcd.DepartureTime.ToUniversalTime(), Source = src, Destination = dest, FreeSeats = tcd.AvailableSeats, Price = tcd.Price });
                                 context.Changes.Add(new Change()
                                 {
                                     DateTime = DateTime.UtcNow.ToUniversalTime(),
-                                    Description = $"New travel added from {tcd.Source} to {tcd.Destination} with {tcd.AvailableSeats} seats and for {tcd.Price}",
+                                    Description = $"New travel added from {src} to {dest} with {tcd.AvailableSeats} seats and for {tcd.Price}",
                                 });
                             }
                         break;
@@ -77,6 +86,19 @@ namespace Transport.Consumers
                                             BigRoomNumberChange = 0,
                                             SmallRoomNumberChange = 0,
                                         }
+                                    });
+                                    await ctx.Publish(new ChangesInOffersEvent()
+                                    {
+                                        HotelId = -1,
+                                        HotelName = "",
+                                        BigRoomsAvailable = 0,
+                                        SmallRoomsAvaialable = 0,
+                                        WifiAvailable = false,
+                                        BreakfastAvailable = false,
+                                        HotelPricePerPerson = 0,
+                                        TransportId = utrvl.Id,
+                                        TransportPricePerSeat = tcd.Price >= 0 ? tcd.Price : utrvl.Price,
+                                        PlaneAvailable = false,
                                     });
                                     reserv.State = ReservationState.INVALIDATED;
                                     context.Changes.Add(new Change()
@@ -143,7 +165,7 @@ namespace Transport.Consumers
                                                 {
                                                     TransportId = utrvl.Id,
                                                     PlaneAvailable = true,
-                                                    FreeSeatsChange = tcd.AvailableSeats,
+                                                    FreeSeatsChange = tcd.AvailableSeats - sum,
                                                     ChangeInTransportPrice = utrvl.Price,
                                                 },
                                                 ChangesInHotel = new HotelChange()
@@ -239,6 +261,19 @@ namespace Transport.Consumers
                                     DateTime = DateTime.UtcNow.ToUniversalTime(),
                                     Description = $"Available seats change in travel ID: {utrvl.Id} - seats available without reservations {utrvl.FreeSeats}",
                                 });
+                                await ctx.Publish(new ChangesInOffersEvent()
+                                {
+                                    HotelId = -1,
+                                    HotelName = "",
+                                    BigRoomsAvailable = 0,
+                                    SmallRoomsAvaialable = 0,
+                                    WifiAvailable = false,
+                                    BreakfastAvailable = false,
+                                    HotelPricePerPerson = 0,
+                                    TransportId = utrvl.Id,
+                                    TransportPricePerSeat = tcd.Price >= 0 ? tcd.Price : utrvl.Price,
+                                    PlaneAvailable = true,
+                                });
                             }
                             else if (tcd.Price >= 0 && tcd.Price != utrvl.Price)
                             {
@@ -277,6 +312,19 @@ namespace Transport.Consumers
                                 {
                                     DateTime = DateTime.UtcNow.ToUniversalTime(),
                                     Description = $"Changed tarvel ID: {utrvl.Id} price to {utrvl.Price}",
+                                });
+                                await ctx.Publish(new ChangesInOffersEvent()
+                                {
+                                    HotelId = -1,
+                                    HotelName = "",
+                                    BigRoomsAvailable = 0,
+                                    SmallRoomsAvaialable = 0,
+                                    WifiAvailable = false,
+                                    BreakfastAvailable = false,
+                                    HotelPricePerPerson = 0,
+                                    TransportId = utrvl.Id,
+                                    TransportPricePerSeat = tcd.Price,
+                                    PlaneAvailable = true,
                                 });
                             }
                         }
