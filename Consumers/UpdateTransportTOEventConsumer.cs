@@ -94,6 +94,7 @@ namespace Transport.Consumers
                                         Description = $"Invalidated reservation ID: {reserv.ReserveId} - no avaialable seats",
                                     });
                                 }
+                                utrvl.FreeSeats = 0;
                                 await ctx.Publish(new ChangesInOffersEvent()
                                 {
                                     HotelId = -1,

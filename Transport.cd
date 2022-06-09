@@ -3,7 +3,7 @@
   <Class Name="Transport.Consumers.BookTravelEventConsumer" BaseTypeListCollapsed="true">
     <Position X="1.5" Y="7.5" Width="2.25" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAIAAAAAAAAAAAAAAABAAAAJAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Consumers\BookTravelEventConsumer.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -41,9 +41,9 @@
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Transport.Consumers.UnbookTravelEventConsumer" BaseTypeListCollapsed="true">
-    <Position X="1.5" Y="9.5" Width="2.25" />
+    <Position X="1.5" Y="9" Width="2.25" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAIAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Consumers\UnbookTravelEventConsumer.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -56,13 +56,6 @@
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
-  <Class Name="Transport.Database.Tables.Booking">
-    <Position X="3.25" Y="1.25" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAEAAAAAAAAAAQAACAAAAQAAAAAAA=</HashCode>
-      <FileName>Database\Tables\Booking.cs</FileName>
-    </TypeIdentifier>
-  </Class>
   <Class Name="Transport.Database.Tables.Destination">
     <Position X="3.25" Y="3" Width="1.5" />
     <TypeIdentifier>
@@ -73,12 +66,12 @@
   <Class Name="Transport.Database.Tables.Reservation">
     <Position X="5" Y="1.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAABAEAAAAAAAAAAAAACAAAAQAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAABAEAAAAAAAAAAAAACAAAAQBAAAAAA=</HashCode>
       <FileName>Database\Tables\Reservation.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Transport.Database.Tables.Source">
-    <Position X="5" Y="3" Width="1.5" />
+    <Position X="5" Y="3.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAACAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Database\Tables\Source.cs</FileName>
@@ -87,14 +80,14 @@
   <Class Name="Transport.Database.Tables.Travel">
     <Position X="6.75" Y="1.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAACAAAAAwAgAAIAEAAAAAAAAAAAAAAEAACAAAAAAAA=</HashCode>
+      <HashCode>AAACAAAAAwAAAAIAEAAAAAAAAAAAAAAEAACAAAAAAAA=</HashCode>
       <FileName>Database\Tables\Travel.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Transport.Database.TransportContext">
     <Position X="1.5" Y="1.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAgAAAAEAAAAAAAEAAQAAAEAAAAAAAgBAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAgAEAAAAAAAEAAQAAAEAAAAAAAgBAA=</HashCode>
       <FileName>Database\TransportContext.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -104,6 +97,21 @@
       <HashCode>AAAAAAAAAwAAAAIAEgAAAAAAAAAAAAAEAAAAAAAAAAA=</HashCode>
       <FileName>Models\Transport\GetAvailableTravelsReplyEvent.cs</FileName>
     </TypeIdentifier>
+  </Class>
+  <Class Name="Transport.Database.Tables.Change">
+    <Position X="3.25" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAgAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAA=</HashCode>
+      <FileName>Database\Tables\Change.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Transport.Consumers.UpdateTransportTOEventConsumer">
+    <Position X="7" Y="9" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Consumers\UpdateTransportTOEventConsumer.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
   </Class>
   <Font Name="Segoe UI" Size="9" />
 </ClassDiagram>
