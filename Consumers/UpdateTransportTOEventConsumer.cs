@@ -87,19 +87,6 @@ namespace Transport.Consumers
                                             SmallRoomNumberChange = 0,
                                         }
                                     });
-                                    await ctx.Publish(new ChangesInOffersEvent()
-                                    {
-                                        HotelId = -1,
-                                        HotelName = "",
-                                        BigRoomsAvailable = 0,
-                                        SmallRoomsAvaialable = 0,
-                                        WifiAvailable = false,
-                                        BreakfastAvailable = false,
-                                        HotelPricePerPerson = 0,
-                                        TransportId = utrvl.Id,
-                                        TransportPricePerSeat = tcd.Price >= 0 ? tcd.Price : utrvl.Price,
-                                        PlaneAvailable = false,
-                                    });
                                     reserv.State = ReservationState.INVALIDATED;
                                     context.Changes.Add(new Change()
                                     {
@@ -107,7 +94,19 @@ namespace Transport.Consumers
                                         Description = $"Invalidated reservation ID: {reserv.ReserveId} - no avaialable seats",
                                     });
                                 }
-
+                                await ctx.Publish(new ChangesInOffersEvent()
+                                {
+                                    HotelId = -1,
+                                    HotelName = "",
+                                    BigRoomsAvailable = 0,
+                                    SmallRoomsAvaialable = 0,
+                                    WifiAvailable = false,
+                                    BreakfastAvailable = false,
+                                    HotelPricePerPerson = 0,
+                                    TransportId = utrvl.Id,
+                                    TransportPricePerSeat = tcd.Price >= 0 ? tcd.Price : utrvl.Price,
+                                    PlaneAvailable = false,
+                                });
                                 context.Changes.Add(new Change()
                                 {
                                     DateTime = DateTime.UtcNow.ToUniversalTime(),
